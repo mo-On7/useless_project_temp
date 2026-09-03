@@ -53,102 +53,161 @@ document.addEventListener(
             );
 
 
+        let returnedToOriginalSite =
+            false;
+
+
         async function monitorBlock() {
 
-            try {
+            if (!returnUrl) {
 
-                const data =
-                    await chrome.storage.local.get(
-                        "strangebaitState"
-                    );
+                return;
 
-
-                const state =
-                    data.strangebaitState;
+            }
 
 
-                if (!state) {
-                    return;
-                }
+            const checkTimer =
+
+                setInterval(
+
+                    async () => {
 
 
-                if (
-                    state.prankState !==
-                    "BLOCKED"
-                ) {
-                    return;
-                }
+                        if (
+                            returnedToOriginalSite
+                        ) {
+
+                            clearInterval(
+                                checkTimer
+                            );
+
+                            return;
+
+                        }
 
 
-                const checkTimer =
-                    setInterval(
-                        async () => {
+                        try {
 
-                            try {
+                            const data =
 
-                                const latestData =
-                                    await chrome.storage.local.get(
-                                        "strangebaitState"
-                                    );
+                                await chrome.storage.local.get(
 
+                                    "strangebaitState"
 
-                                const latestState =
-                                    latestData.strangebaitState;
-
-
-                                if (
-                                    !latestState ||
-                                    latestState.prankState !==
-                                    "BLOCKED"
-                                ) {
-
-                                    clearInterval(
-                                        checkTimer
-                                    );
-
-                                    return;
-                                }
-
-
-                                if (
-                                    Date.now() >=
-                                    latestState.blockUntil
-                                ) {
-
-                                    clearInterval(
-                                        checkTimer
-                                    );
-
-
-                                    if (
-                                        returnUrl
-                                    ) {
-
-                                        window.location.href =
-                                            returnUrl;
-                                    }
-
-                                }
-
-                            } catch (error) {
-
-                                console.log(
-                                    "Timer check failed:",
-                                    error
                                 );
+
+
+                            const state =
+
+                                data.strangebaitState;
+
+
+                            if (!state) {
+
+                                return;
+
                             }
 
-                        },
-                        500
-                    );
 
-            } catch (error) {
 
-                console.log(
-                    "Could not read stRAnGEBAIT state:",
-                    error
+                            // --------------------------------
+                            // BLOCK IS STILL ACTIVE
+                            // --------------------------------
+
+                            if (
+
+                                state.prankState ===
+
+                                "BLOCKED"
+
+                            ) {
+
+                                if (
+
+                                    Date.now() >=
+
+                                    state.blockUntil
+
+                                ) {
+
+                                    returnedToOriginalSite =
+
+                                        true;
+
+
+                                    clearInterval(
+
+                                        checkTimer
+
+                                    );
+
+
+                                    window.location.replace(
+
+                                        returnUrl
+
+                                    );
+
+                                }
+
+
+                                return;
+
+                            }
+
+
+
+                            // --------------------------------
+                            // BLOCK HAS FINISHED
+                            // --------------------------------
+
+                            if (
+
+                                state.prankState ===
+
+                                "DONE"
+
+                            ) {
+
+                                returnedToOriginalSite =
+
+                                    true;
+
+
+                                clearInterval(
+
+                                    checkTimer
+
+                                );
+
+
+                                window.location.replace(
+
+                                    returnUrl
+
+                                );
+
+                            }
+
+
+                        } catch (error) {
+
+                            console.log(
+
+                                "Timer check failed:",
+
+                                error
+
+                            );
+
+                        }
+
+                    },
+
+                    500
+
                 );
-            }
+
         }
 
 
@@ -244,6 +303,7 @@ document.addEventListener(
             return Math.random() *
                 (max - min) +
                 min;
+
         }
 
 
@@ -541,7 +601,8 @@ document.addEventListener(
                     spider.speed *
                     8 +
                     spider.phase
-                ) * 1.5;
+                ) *
+                1.5;
 
 
             const x =
