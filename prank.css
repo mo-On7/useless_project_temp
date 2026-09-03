@@ -9,14 +9,50 @@
     background: transparent;
 }
 
+
+/* Doctor Strange image */
+
+#strangebait-strange-image {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    width: auto;
+    height: 60vh;
+
+    max-width: 80vw;
+
+    object-fit: contain;
+
+    z-index: 2;
+
+    opacity: 1;
+
+    transition: opacity 0.05s linear;
+
+    pointer-events: none;
+}
+
+
+/* Magical ring */
+
 #strangebait-ring-canvas {
     position: absolute;
+
     top: 0;
     left: 0;
+
     width: 100vw;
     height: 100vh;
+
     z-index: 1;
+
     display: block;
+
     pointer-events: none;
+
     background: transparent;
 }
