@@ -10,9 +10,8 @@
 
 
 ### Team Members
-- Team Lead: [Name] - [College]
-- Member 2: [Name] - [College]
-- Member 3: [Name] - [College]
+- Team Lead: Nidhi Sandeep - Model Enginneering College,Thrikkakara
+- Member 2: Manjari Nair Ani - Model Enginneering College,Thrikkakara
 
 ### Project Description
 [2-3 lines about what your project does]
@@ -31,10 +30,6 @@ For Software:
 - [Libraries used]
 - [Tools used]
 
-For Hardware:
-- [List main components]
-- [List specifications]
-- [List tools required]
 
 ### Implementation
 For Software:
