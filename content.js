@@ -1,73 +1,135 @@
 let prankStarted = false;
 
-chrome.runtime.onMessage.addListener((message) => {
-    if (message.action === "START_STRANGEBAIT_PRANK") {
-        if (prankStarted) return;
 
-        prankStarted = true;
-        startPrank();
+chrome.runtime.onMessage.addListener(
+    (message) => {
+
+        if (
+            message.action ===
+            "START_STRANGEBAIT_PRANK"
+        ) {
+
+            if (prankStarted) {
+                return;
+            }
+
+            prankStarted = true;
+
+            startPrank();
+        }
     }
-});
+);
+
 
 chrome.runtime.sendMessage({
-    action: "PAGE_READY"
+    action:
+        "PAGE_READY"
 });
 
 
 function startPrank() {
 
-    const overlay = createPrankOverlay();
+    const overlay =
+        createPrankOverlay();
+
 
     startMagicalRing(
-        overlay.querySelector("#strangebait-ring-canvas"),
-        overlay.querySelector("#strangebait-strange-image")
+        overlay.querySelector(
+            "#strangebait-ring-canvas"
+        ),
+        overlay.querySelector(
+            "#strangebait-strange-image"
+        )
     );
 }
 
 
 function createPrankOverlay() {
 
-    const overlay = document.createElement("div");
-    overlay.id = "strangebait-prank-overlay";
+    const overlay =
+        document.createElement("div");
 
-    // Doctor Strange image
-    const strangeImage = document.createElement("img");
+    overlay.id =
+        "strangebait-prank-overlay";
 
-    strangeImage.id = "strangebait-strange-image";
+
+    // ------------------------------------------
+    // DOCTOR STRANGE IMAGE
+    // ------------------------------------------
+
+    const strangeImage =
+        document.createElement("img");
+
+
+    strangeImage.id =
+        "strangebait-strange-image";
+
 
     strangeImage.src =
-        chrome.runtime.getURL("media/strange.png");
-
-    strangeImage.alt = "Doctor Strange";
-
-    overlay.appendChild(strangeImage);
+        chrome.runtime.getURL(
+            "media/strange.png"
+        );
 
 
-    // Magical ring canvas
-    const canvas = document.createElement("canvas");
-
-    canvas.id = "strangebait-ring-canvas";
-
-    overlay.appendChild(canvas);
+    strangeImage.alt =
+        "Doctor Strange";
 
 
-    document.documentElement.appendChild(overlay);
+    overlay.appendChild(
+        strangeImage
+    );
+
+
+    // ------------------------------------------
+    // MAGICAL RING CANVAS
+    // ------------------------------------------
+
+    const canvas =
+        document.createElement("canvas");
+
+
+    canvas.id =
+        "strangebait-ring-canvas";
+
+
+    overlay.appendChild(
+        canvas
+    );
+
+
+    document.documentElement.appendChild(
+        overlay
+    );
+
 
     return overlay;
 }
 
 
-function startMagicalRing(canvas, strangeImage) {
+function startMagicalRing(
+    canvas,
+    strangeImage
+) {
 
-    const ctx = canvas.getContext("2d");
+    const ctx =
+        canvas.getContext("2d");
 
-    const duration = 5000;
 
-    const sparkCount = 300;
+    const duration =
+        5000;
 
-    const circleThickness = 18;
 
-    const sparkSpread = 22;
+    const sparkCount =
+        300;
+
+
+    const circleThickness =
+        18;
+
+
+    const sparkSpread =
+        22;
+
 
     let animationFrame;
 
@@ -76,19 +138,28 @@ function startMagicalRing(canvas, strangeImage) {
 
     function resizeCanvas() {
 
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        const dpr =
+            Math.min(
+                window.devicePixelRatio || 1,
+                1.5
+            );
+
 
         canvas.width =
             window.innerWidth * dpr;
 
+
         canvas.height =
             window.innerHeight * dpr;
+
 
         canvas.style.width =
             window.innerWidth + "px";
 
+
         canvas.style.height =
             window.innerHeight + "px";
+
 
         ctx.setTransform(
             dpr,
@@ -103,6 +174,7 @@ function startMagicalRing(canvas, strangeImage) {
 
     resizeCanvas();
 
+
     window.addEventListener(
         "resize",
         resizeCanvas
@@ -111,143 +183,197 @@ function startMagicalRing(canvas, strangeImage) {
 
     const sparks = [];
 
-    for (let i = 0; i < sparkCount; i++) {
+
+    for (
+        let i = 0;
+        i < sparkCount;
+        i++
+    ) {
 
         sparks.push({
 
             angle:
-                Math.random() * Math.PI * 2,
+                Math.random() *
+                Math.PI * 2,
 
             offset:
-                Math.random() * sparkSpread -
+                Math.random() *
+                sparkSpread -
                 sparkSpread / 2,
 
             length:
-                Math.random() * 15 + 5,
+                Math.random() *
+                15 + 5,
 
             size:
-                Math.random() * 2 + 0.5,
+                Math.random() *
+                2 + 0.5,
 
             brightness:
-                Math.random() * 0.7 + 0.3,
+                Math.random() *
+                0.7 + 0.3,
 
             speed:
-                Math.random() * 0.8 + 0.2,
+                Math.random() *
+                0.8 + 0.2,
 
             flicker:
-                Math.random() * Math.PI * 2,
+                Math.random() *
+                Math.PI * 2,
 
             curve:
-                Math.random() * 0.5
+                Math.random() *
+                0.5
         });
     }
 
 
-    function drawBlackInside(radius) {
+    function drawBlackInside(
+        radius
+    ) {
 
         ctx.beginPath();
 
+
         ctx.arc(
+
             window.innerWidth / 2,
+
             window.innerHeight / 2,
-            Math.max(0, radius),
+
+            Math.max(
+                0,
+                radius
+            ),
+
             0,
+
             Math.PI * 2
         );
 
-        ctx.fillStyle = "black";
+
+        ctx.fillStyle =
+            "black";
+
 
         ctx.fill();
     }
 
 
-    function drawSparks(radius, time) {
+    function drawSparks(
+        radius,
+        time
+    ) {
 
         const centerX =
             window.innerWidth / 2;
+
 
         const centerY =
             window.innerHeight / 2;
 
 
-        sparks.forEach((spark) => {
+        sparks.forEach(
+            (spark) => {
 
-            const flicker =
-                0.5 +
-                0.5 *
-                Math.sin(
-                    time * 0.01 +
-                    spark.flicker
+                const flicker =
+                    0.5 +
+                    0.5 *
+                    Math.sin(
+                        time *
+                        0.01 +
+                        spark.flicker
+                    );
+
+
+                const alpha =
+                    spark.brightness *
+                    flicker;
+
+
+                const sparkRadius =
+                    radius +
+                    spark.offset;
+
+
+                const startX =
+                    centerX +
+                    Math.cos(
+                        spark.angle
+                    ) *
+                    sparkRadius;
+
+
+                const startY =
+                    centerY +
+                    Math.sin(
+                        spark.angle
+                    ) *
+                    sparkRadius;
+
+
+                const endRadius =
+                    sparkRadius +
+                    spark.length;
+
+
+                const endX =
+                    centerX +
+                    Math.cos(
+                        spark.angle
+                    ) *
+                    endRadius;
+
+
+                const endY =
+                    centerY +
+                    Math.sin(
+                        spark.angle
+                    ) *
+                    endRadius;
+
+
+                ctx.beginPath();
+
+
+                ctx.moveTo(
+                    startX,
+                    startY
                 );
 
 
-            const alpha =
-                spark.brightness *
-                flicker;
+                ctx.lineTo(
+                    endX,
+                    endY
+                );
 
 
-            const sparkRadius =
-                radius +
-                spark.offset;
+                ctx.strokeStyle =
+                    `rgba(
+                        255,
+                        255,
+                        255,
+                        ${alpha}
+                    )`;
 
 
-            const startX =
-                centerX +
-                Math.cos(spark.angle) *
-                sparkRadius;
+                ctx.lineWidth =
+                    spark.size;
 
 
-            const startY =
-                centerY +
-                Math.sin(spark.angle) *
-                sparkRadius;
-
-
-            const endRadius =
-                sparkRadius +
-                spark.length;
-
-
-            const endX =
-                centerX +
-                Math.cos(spark.angle) *
-                endRadius;
-
-
-            const endY =
-                centerY +
-                Math.sin(spark.angle) *
-                endRadius;
-
-
-            ctx.beginPath();
-
-            ctx.moveTo(
-                startX,
-                startY
-            );
-
-            ctx.lineTo(
-                endX,
-                endY
-            );
-
-
-            ctx.strokeStyle =
-                `rgba(255, 255, 255, ${alpha})`;
-
-            ctx.lineWidth =
-                spark.size;
-
-            ctx.stroke();
-        });
+                ctx.stroke();
+            }
+        );
     }
 
 
-    function drawCircle(radius) {
+    function drawCircle(
+        radius
+    ) {
 
         const centerX =
             window.innerWidth / 2;
+
 
         const centerY =
             window.innerHeight / 2;
@@ -255,11 +381,20 @@ function startMagicalRing(canvas, strangeImage) {
 
         ctx.beginPath();
 
+
         ctx.arc(
+
             centerX,
+
             centerY,
-            Math.max(0, radius),
+
+            Math.max(
+                0,
+                radius
+            ),
+
             0,
+
             Math.PI * 2
         );
 
@@ -267,17 +402,22 @@ function startMagicalRing(canvas, strangeImage) {
         ctx.strokeStyle =
             "rgba(255, 255, 255, 0.95)";
 
+
         ctx.lineWidth =
             circleThickness;
+
 
         ctx.stroke();
     }
 
 
-    function drawCenterGlow(radius) {
+    function drawCenterGlow(
+        radius
+    ) {
 
         const centerX =
             window.innerWidth / 2;
+
 
         const centerY =
             window.innerHeight / 2;
@@ -285,12 +425,17 @@ function startMagicalRing(canvas, strangeImage) {
 
         const gradient =
             ctx.createRadialGradient(
+
                 centerX,
                 centerY,
                 0,
+
                 centerX,
                 centerY,
-                Math.max(0, radius)
+                Math.max(
+                    0,
+                    radius
+                )
             );
 
 
@@ -299,10 +444,12 @@ function startMagicalRing(canvas, strangeImage) {
             "rgba(255,255,255,0.7)"
         );
 
+
         gradient.addColorStop(
             0.3,
             "rgba(255,255,255,0.25)"
         );
+
 
         gradient.addColorStop(
             1,
@@ -316,53 +463,74 @@ function startMagicalRing(canvas, strangeImage) {
 
         ctx.beginPath();
 
+
         ctx.arc(
+
             centerX,
+
             centerY,
-            Math.max(0, radius),
+
+            Math.max(
+                0,
+                radius
+            ),
+
             0,
+
             Math.PI * 2
         );
+
 
         ctx.fill();
     }
 
 
-    function animate(timestamp) {
+    function animate(
+        timestamp
+    ) {
 
         if (!startTime) {
-            startTime = timestamp;
+            startTime =
+                timestamp;
         }
 
 
         const elapsed =
-            timestamp - startTime;
+            timestamp -
+            startTime;
 
 
         let progress =
-            elapsed / duration;
+            elapsed /
+            duration;
 
 
         progress =
             Math.min(
-                Math.max(progress, 0),
+                Math.max(
+                    progress,
+                    0
+                ),
                 1
             );
 
 
-        /*
-         * Smooth expansion
-         */
+        // --------------------------------------
+        // SMOOTH RING EXPANSION
+        // --------------------------------------
+
         const expansion =
             0.5 -
             0.5 *
             Math.cos(
-                progress * Math.PI
+                progress *
+                Math.PI
             );
 
 
         const centerX =
             window.innerWidth / 2;
+
 
         const centerY =
             window.innerHeight / 2;
@@ -370,68 +538,86 @@ function startMagicalRing(canvas, strangeImage) {
 
         const maxRadius =
             Math.sqrt(
-                centerX * centerX +
-                centerY * centerY
+                centerX *
+                centerX +
+
+                centerY *
+                centerY
             );
 
 
         const radius =
-            maxRadius * expansion;
+            maxRadius *
+            expansion;
 
 
-        /*
-         * DOCTOR STRANGE IMAGE FADE
-         *
-         * Image starts fully visible.
-         * As the ring expands, the image
-         * gradually becomes transparent.
-         */
+        // --------------------------------------
+        // DOCTOR STRANGE FADE
+        // --------------------------------------
+
         if (strangeImage) {
 
             strangeImage.style.opacity =
-                String(1 - progress);
+                String(
+                    1 - progress
+                );
         }
 
 
-        /*
-         * Clear canvas
-         */
+        // --------------------------------------
+        // CLEAR CANVAS
+        // --------------------------------------
+
         ctx.clearRect(
+
             0,
             0,
+
             window.innerWidth,
             window.innerHeight
         );
 
 
-        /*
-         * Black center
-         */
-        drawBlackInside(radius);
+        // --------------------------------------
+        // BLACK CENTER
+        // --------------------------------------
+
+        drawBlackInside(
+            radius
+        );
 
 
-        /*
-         * Magical sparks
-         */
+        // --------------------------------------
+        // SPARKS
+        // --------------------------------------
+
         drawSparks(
             radius,
             elapsed
         );
 
 
-        /*
-         * Magical ring
-         */
-        drawCircle(radius);
+        // --------------------------------------
+        // RING
+        // --------------------------------------
+
+        drawCircle(
+            radius
+        );
 
 
-        /*
-         * Center glow
-         */
-        drawCenterGlow(radius);
+        // --------------------------------------
+        // GLOW
+        // --------------------------------------
+
+        drawCenterGlow(
+            radius
+        );
 
 
-        if (progress < 1) {
+        if (
+            progress < 1
+        ) {
 
             animationFrame =
                 requestAnimationFrame(
@@ -461,14 +647,17 @@ function startMagicalRing(canvas, strangeImage) {
         );
 
 
-        setTimeout(() => {
+        setTimeout(
+            () => {
 
-            chrome.runtime.sendMessage({
-                action:
-                    "STRANGEBAIT_ANIMATION_FINISHED"
-            });
+                chrome.runtime.sendMessage({
+                    action:
+                        "STRANGEBAIT_ANIMATION_FINISHED"
+                });
 
-        }, 300);
+            },
+            300
+        );
     }
 
 

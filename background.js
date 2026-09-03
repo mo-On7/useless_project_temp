@@ -6,8 +6,12 @@ const STATES = {
     DONE: "DONE"
 };
 
-const STRANGEBAIT_PRANK_ALARM = "strangebait-prank";
-const STRANGEBAIT_UNBLOCK_ALARM = "strangebait-unblock";
+const STRANGEBAIT_PRANK_ALARM =
+    "strangebait-prank";
+
+const STRANGEBAIT_UNBLOCK_ALARM =
+    "strangebait-unblock";
+
 
 const DEFAULT_STATE = {
     prankState: STATES.DONE,
@@ -28,11 +32,15 @@ const DEFAULT_STATE = {
 
 async function getState() {
 
-    const data = await chrome.storage.local.get(
-        "strangebaitState"
-    );
+    const data =
+        await chrome.storage.local.get(
+            "strangebaitState"
+        );
 
-    return data.strangebaitState || DEFAULT_STATE;
+    return (
+        data.strangebaitState ||
+        DEFAULT_STATE
+    );
 }
 
 
@@ -56,7 +64,8 @@ function isNormalWebsite(url) {
 
     try {
 
-        const parsed = new URL(url);
+        const parsed =
+            new URL(url);
 
         return (
             parsed.protocol === "http:" ||
@@ -84,8 +93,11 @@ function sameSite(host1, host2) {
         return false;
     }
 
-    host1 = normalizeHost(host1);
-    host2 = normalizeHost(host2);
+    host1 =
+        normalizeHost(host1);
+
+    host2 =
+        normalizeHost(host2);
 
     return (
         host1 === host2 ||
@@ -106,7 +118,10 @@ chrome.runtime.onMessage.addListener(
         // ACTIVATE
         // ------------------------------------------
 
-        if (message.action === "ACTIVATE_STRANGEBAIT") {
+        if (
+            message.action ===
+            "ACTIVATE_STRANGEBAIT"
+        ) {
 
             await chrome.alarms.clear(
                 STRANGEBAIT_PRANK_ALARM
@@ -118,16 +133,23 @@ chrome.runtime.onMessage.addListener(
 
             await setState({
 
-                prankState: STATES.WAITING,
+                prankState:
+                    STATES.WAITING,
 
-                targetHost: null,
-                targetTabId: null,
+                targetHost:
+                    null,
 
-                triggerAt: 0,
-                blockUntil: 0,
+                targetTabId:
+                    null,
 
-                targetUrl: null
+                triggerAt:
+                    0,
 
+                blockUntil:
+                    0,
+
+                targetUrl:
+                    null
             });
 
             console.log(
@@ -142,9 +164,13 @@ chrome.runtime.onMessage.addListener(
         // START TIMER
         // ------------------------------------------
 
-        if (message.action === "PAGE_READY") {
+        if (
+            message.action ===
+            "PAGE_READY"
+        ) {
 
-            const state = await getState();
+            const state =
+                await getState();
 
             if (
                 state.prankState !==
@@ -167,17 +193,23 @@ chrome.runtime.onMessage.addListener(
 
             await setState({
 
-                prankState: STATES.COUNTING,
+                prankState:
+                    STATES.COUNTING,
 
-                targetHost: null,
-                targetTabId: null,
+                targetHost:
+                    null,
 
-                triggerAt: triggerAt,
+                targetTabId:
+                    null,
 
-                blockUntil: 0,
+                triggerAt:
+                    triggerAt,
 
-                targetUrl: null
+                blockUntil:
+                    0,
 
+                targetUrl:
+                    null
             });
 
 
@@ -212,7 +244,8 @@ chrome.runtime.onMessage.addListener(
             "STRANGEBAIT_ANIMATION_FINISHED"
         ) {
 
-            const state = await getState();
+            const state =
+                await getState();
 
             if (
                 state.prankState !==
@@ -239,17 +272,17 @@ chrome.runtime.onMessage.addListener(
             "STRANGEBAIT_BLOCK_EXPIRED"
         ) {
 
-            const state = await getState();
+            const state =
+                await getState();
 
             if (
                 state.prankState ===
-                STATES.BLOCKED &&
+                    STATES.BLOCKED &&
                 Date.now() >=
-                state.blockUntil
+                    state.blockUntil
             ) {
 
                 await finishBlock();
-
             }
 
             return;
@@ -300,11 +333,8 @@ chrome.alarms.onAlarm.addListener(
 
             const tabs =
                 await chrome.tabs.query({
-
                     active: true,
-
                     lastFocusedWindow: true
-
                 });
 
 
@@ -388,7 +418,6 @@ chrome.alarms.onAlarm.addListener(
 
                 targetUrl:
                     activeTab.url
-
             });
 
 
@@ -455,11 +484,8 @@ chrome.alarms.onAlarm.addListener(
             ) {
 
                 await finishBlock();
-
             }
-
         }
-
     }
 );
 
@@ -495,7 +521,6 @@ async function startBlock(host) {
 
         blockUntil:
             blockUntil
-
     });
 
 
@@ -541,7 +566,6 @@ async function finishBlock() {
 
         blockUntil:
             0
-
     });
 
 
@@ -567,6 +591,10 @@ chrome.tabs.onUpdated.addListener(
             await getState();
 
 
+        // ------------------------------------------
+        // ONLY WORK WHILE BLOCKED
+        // ------------------------------------------
+
         if (
             state.prankState !==
             STATES.BLOCKED
@@ -574,6 +602,10 @@ chrome.tabs.onUpdated.addListener(
             return;
         }
 
+
+        // ------------------------------------------
+        // CHECK WHETHER 2 MINUTES ARE OVER
+        // ------------------------------------------
 
         if (
             Date.now() >=
@@ -586,6 +618,10 @@ chrome.tabs.onUpdated.addListener(
         }
 
 
+        // ------------------------------------------
+        // ONLY NORMAL WEBSITES
+        // ------------------------------------------
+
         if (
             !isNormalWebsite(
                 tab.url
@@ -595,8 +631,11 @@ chrome.tabs.onUpdated.addListener(
         }
 
 
-        let currentHost;
+        // ------------------------------------------
+        // GET CURRENT HOST
+        // ------------------------------------------
 
+        let currentHost;
 
         try {
 
@@ -613,20 +652,27 @@ chrome.tabs.onUpdated.addListener(
         }
 
 
+        // ------------------------------------------
+        // CHECK AGAINST BLOCKED WEBSITE
+        // ------------------------------------------
+
         if (
             !sameSite(
                 currentHost,
                 state.targetHost
             )
         ) {
-
             return;
         }
 
 
-        const blockedPage =
+        // ------------------------------------------
+        // REDIRECT TO ERROR PAGE
+        // ------------------------------------------
+
+        const errorPage =
             chrome.runtime.getURL(
-                "blocked.html"
+                "error.html"
             ) +
             "?returnUrl=" +
             encodeURIComponent(
@@ -639,7 +685,7 @@ chrome.tabs.onUpdated.addListener(
             await chrome.tabs.update(
                 tabId,
                 {
-                    url: blockedPage
+                    url: errorPage
                 }
             );
 

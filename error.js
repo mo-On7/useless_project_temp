@@ -38,69 +38,212 @@ document.addEventListener(
 
 
         /* ==========================================
+           BLOCK TIMER / RETURN URL
+        ========================================== */
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+
+        const returnUrl =
+            params.get(
+                "returnUrl"
+            );
+
+
+        async function monitorBlock() {
+
+            try {
+
+                const data =
+                    await chrome.storage.local.get(
+                        "strangebaitState"
+                    );
+
+
+                const state =
+                    data.strangebaitState;
+
+
+                if (!state) {
+                    return;
+                }
+
+
+                if (
+                    state.prankState !==
+                    "BLOCKED"
+                ) {
+                    return;
+                }
+
+
+                const checkTimer =
+                    setInterval(
+                        async () => {
+
+                            try {
+
+                                const latestData =
+                                    await chrome.storage.local.get(
+                                        "strangebaitState"
+                                    );
+
+
+                                const latestState =
+                                    latestData.strangebaitState;
+
+
+                                if (
+                                    !latestState ||
+                                    latestState.prankState !==
+                                    "BLOCKED"
+                                ) {
+
+                                    clearInterval(
+                                        checkTimer
+                                    );
+
+                                    return;
+                                }
+
+
+                                if (
+                                    Date.now() >=
+                                    latestState.blockUntil
+                                ) {
+
+                                    clearInterval(
+                                        checkTimer
+                                    );
+
+
+                                    if (
+                                        returnUrl
+                                    ) {
+
+                                        window.location.href =
+                                            returnUrl;
+                                    }
+
+                                }
+
+                            } catch (error) {
+
+                                console.log(
+                                    "Timer check failed:",
+                                    error
+                                );
+                            }
+
+                        },
+                        500
+                    );
+
+            } catch (error) {
+
+                console.log(
+                    "Could not read stRAnGEBAIT state:",
+                    error
+                );
+            }
+        }
+
+
+        monitorBlock();
+
+
+        /* ==========================================
            MESSAGES
         ========================================== */
 
         const messages = [
 
             {
-                title: "404 Error",
+                title:
+                    "404 Error",
+
                 subtitle:
                     "Page not found in this universe..."
             },
 
+
             {
                 title:
                     "Location detected in another universe",
-                subtitle: ""
+
+                subtitle:
+                    ""
             },
+
 
             {
                 title:
                     "Would you like to proceed?",
-                subtitle: ""
+
+                subtitle:
+                    ""
             }
 
         ];
 
 
         let width = 0;
+
         let height = 0;
 
+
         let stars = [];
+
         let spiders = [];
+
 
         let currentMessage = 0;
 
-        let state = "entering";
 
-        let stateStart = 0;
+        let state =
+            "entering";
+
+
+        let stateStart =
+            0;
 
 
         /* ==========================================
            TIMING
         ========================================== */
 
-        const ENTER_TIME = 2000;
+        const ENTER_TIME =
+            2000;
 
-        const HOLD_TIME = 5000;
+        const HOLD_TIME =
+            5000;
 
-        const EXIT_TIME = 2000;
+        const EXIT_TIME =
+            2000;
 
 
-        const MOVING_SPEED = 1.0;
+        const MOVING_SPEED =
+            1.0;
 
-        const STATIONARY_SPEED = 0.08;
+        const STATIONARY_SPEED =
+            0.08;
 
 
         /* ==========================================
            RANDOM
         ========================================== */
 
-        function random(min, max) {
+        function random(
+            min,
+            max
+        ) {
 
             return Math.random() *
-                (max - min) + min;
+                (max - min) +
+                min;
         }
 
 
@@ -116,6 +259,7 @@ document.addEventListener(
                     2
                 );
 
+
             width =
                 window.innerWidth;
 
@@ -128,6 +272,7 @@ document.addEventListener(
                     width * dpr
                 );
 
+
             canvas.height =
                 Math.floor(
                     height * dpr
@@ -136,6 +281,7 @@ document.addEventListener(
 
             canvas.style.width =
                 width + "px";
+
 
             canvas.style.height =
                 height + "px";
@@ -168,8 +314,10 @@ document.addEventListener(
             const starCount =
                 Math.min(
                     420,
+
                     Math.max(
                         180,
+
                         Math.floor(
                             area / 6500
                         )
@@ -231,8 +379,10 @@ document.addEventListener(
             const spiderCount =
                 Math.min(
                     22,
+
                     Math.max(
                         10,
+
                         Math.floor(
                             area / 45000
                         )
@@ -295,6 +445,7 @@ document.addEventListener(
                 return MOVING_SPEED;
             }
 
+
             return STATIONARY_SPEED;
         }
 
@@ -303,25 +454,33 @@ document.addEventListener(
            STARS
         ========================================== */
 
-        function drawStars(time) {
+        function drawStars(
+            time
+        ) {
 
             ctx.save();
 
+
             ctx.fillStyle =
                 STAR;
+
 
             const bgSpeed =
                 getBackgroundSpeed();
 
 
-            for (const s of stars) {
+            for (
+                const s of stars
+            ) {
 
                 s.x -=
                     s.drift *
                     bgSpeed;
 
 
-                if (s.x < -4) {
+                if (
+                    s.x < -4
+                ) {
 
                     s.x =
                         width + 4;
@@ -390,11 +549,13 @@ document.addEventListener(
                     spider.x
                 );
 
+
             const y =
                 Math.round(
                     spider.y +
                     bob
                 );
+
 
             const u =
                 spider.scale;
@@ -402,10 +563,12 @@ document.addEventListener(
 
             ctx.save();
 
+
             ctx.translate(
                 x,
                 y
             );
+
 
             ctx.scale(
                 u,
@@ -416,14 +579,18 @@ document.addEventListener(
             ctx.strokeStyle =
                 STAR;
 
+
             ctx.fillStyle =
                 STAR;
+
 
             ctx.globalAlpha =
                 0.72;
 
+
             ctx.lineWidth =
                 1.5;
+
 
             ctx.lineCap =
                 "square";
@@ -470,15 +637,18 @@ document.addEventListener(
 
                 ctx.beginPath();
 
+
                 ctx.moveTo(
                     x1,
                     y1
                 );
 
+
                 ctx.lineTo(
                     x2,
                     y2
                 );
+
 
                 ctx.stroke();
             }
@@ -492,7 +662,9 @@ document.addEventListener(
            SPIDERS
         ========================================== */
 
-        function drawSpiders(time) {
+        function drawSpiders(
+            time
+        ) {
 
             const bgSpeed =
                 getBackgroundSpeed();
@@ -516,6 +688,7 @@ document.addEventListener(
                     spider.x =
                         width + 20;
 
+
                     spider.y =
                         Math.random() *
                         height;
@@ -534,7 +707,9 @@ document.addEventListener(
            BACKGROUND
         ========================================== */
 
-        function drawBackground(time) {
+        function drawBackground(
+            time
+        ) {
 
             ctx.fillStyle =
                 BG;
@@ -548,9 +723,14 @@ document.addEventListener(
             );
 
 
-            drawStars(time);
+            drawStars(
+                time
+            );
 
-            drawSpiders(time);
+
+            drawSpiders(
+                time
+            );
         }
 
 
@@ -558,11 +738,16 @@ document.addEventListener(
            EASING
         ========================================== */
 
-        function easeInOutCubic(t) {
+        function easeInOutCubic(
+            t
+        ) {
 
             return t < 0.5
 
-                ? 4 * t * t * t
+                ? 4 *
+                  t *
+                  t *
+                  t
 
                 : 1 -
                   Math.pow(
@@ -576,34 +761,45 @@ document.addEventListener(
            SET MESSAGE
         ========================================== */
 
-        function setMessage(index) {
+        function setMessage(
+            index
+        ) {
 
             const item =
                 messages[index];
 
 
-            if (index === 0) {
+            if (
+                index === 0
+            ) {
 
                 errorCode.textContent =
                     "404";
 
+
                 errorWord.textContent =
                     " Error";
+
             }
 
-            else if (index === 1) {
+            else if (
+                index === 1
+            ) {
 
                 errorCode.textContent =
                     "";
 
+
                 errorWord.innerHTML =
                     "Location detected in<br>another universe";
+
             }
 
             else {
 
                 errorCode.textContent =
                     "";
+
 
                 errorWord.textContent =
                     item.title;
@@ -637,13 +833,18 @@ document.addEventListener(
             currentMessage =
                 index;
 
+
             state =
                 "entering";
+
 
             stateStart =
                 now;
 
-            setMessage(index);
+
+            setMessage(
+                index
+            );
         }
 
 
@@ -651,10 +852,13 @@ document.addEventListener(
            UPDATE MESSAGE
         ========================================== */
 
-        function updateMessage(now) {
+        function updateMessage(
+            now
+        ) {
 
             const elapsed =
-                now - stateStart;
+                now -
+                stateStart;
 
 
             /* ======================================
@@ -674,7 +878,9 @@ document.addEventListener(
 
 
                 const eased =
-                    easeInOutCubic(t);
+                    easeInOutCubic(
+                        t
+                    );
 
 
                 const startX =
@@ -694,7 +900,9 @@ document.addEventListener(
                     )`;
 
 
-                if (t >= 1) {
+                if (
+                    t >= 1
+                ) {
 
                     message.style.transform =
                         "translate3d(-50%, -50%, 0)";
@@ -737,8 +945,10 @@ document.addEventListener(
                         state =
                             "done";
 
+
                         yes.style.display =
                             "block";
+
 
                         return;
                     }
@@ -746,6 +956,7 @@ document.addEventListener(
 
                     state =
                         "exiting";
+
 
                     stateStart =
                         now;
@@ -773,7 +984,9 @@ document.addEventListener(
 
 
                 const eased =
-                    easeInOutCubic(t);
+                    easeInOutCubic(
+                        t
+                    );
 
 
                 const endX =
@@ -792,7 +1005,9 @@ document.addEventListener(
                     )`;
 
 
-                if (t >= 1) {
+                if (
+                    t >= 1
+                ) {
 
                     beginMessage(
                         currentMessage + 1,
@@ -816,8 +1031,10 @@ document.addEventListener(
                 message.style.transform =
                     "translate3d(-50%, -50%, 0)";
 
+
                 yes.style.display =
                     "block";
+
 
                 return;
             }
@@ -828,11 +1045,19 @@ document.addEventListener(
            ANIMATION
         ========================================== */
 
-        function animate(now) {
+        function animate(
+            now
+        ) {
 
-            drawBackground(now);
+            drawBackground(
+                now
+            );
 
-            updateMessage(now);
+
+            updateMessage(
+                now
+            );
+
 
             requestAnimationFrame(
                 animate
