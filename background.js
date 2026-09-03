@@ -238,7 +238,68 @@ async function deactivateStrangebait() {
 // --------------------------------------------------
 // MESSAGES
 // --------------------------------------------------
+async function startCountdownForTab(tab) {
 
+    const randomDelay =
+        Math.floor(
+            Math.random() * 6
+        ) + 5;
+
+    const triggerAt =
+        Date.now() +
+        randomDelay * 1000;
+
+    let parsedUrl;
+
+    try {
+        parsedUrl =
+            new URL(tab.url);
+    } catch {
+        return;
+    }
+
+    const targetHost =
+        normalizeHost(
+            parsedUrl.hostname
+        );
+
+    await setState({
+        prankState:
+            STATES.COUNTING,
+
+        targetHost:
+            targetHost,
+
+        targetTabId:
+            tab.id,
+
+        triggerAt:
+            triggerAt,
+
+        blockUntil:
+            0,
+
+        targetUrl:
+            tab.url
+    });
+
+    await chrome.alarms.create(
+        STRANGEBAIT_PRANK_ALARM,
+        {
+            when: triggerAt
+        }
+    );
+
+    console.log(
+        "stRAnGEBAIT timer started."
+    );
+
+    console.log(
+        "Prank starts in:",
+        randomDelay,
+        "seconds."
+    );
+}
 chrome.runtime.onMessage.addListener(
 
     (message) => {
@@ -258,18 +319,29 @@ async function handleMessage(message) {
     // ----------------------------------------------
 
     if (
+    message.action ===
+    "ACTIVATE_STRANGEBAIT"
+) {
+    await activateStrangebait();
 
-        message.action ===
+    const tabs =
+        await chrome.tabs.query({
+            active: true,
+            lastFocusedWindow: true
+        });
 
-        "ACTIVATE_STRANGEBAIT"
-
+    if (
+        tabs.length > 0 &&
+        tabs[0].url &&
+        isNormalWebsite(tabs[0].url)
     ) {
-
-        await activateStrangebait();
-
-        return;
-
+        await startCountdownForTab(
+            tabs[0]
+        );
     }
+
+    return;
+}
     if (
     message.action ===
     "DEACTIVATE_STRANGEBAIT"
