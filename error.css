@@ -1,0 +1,391 @@
+@font-face {
+    font-family: "Blue Screen";
+
+    src: url("https://files.dafonttop.com/b/471/21471/file/Blue%20Screen%20Personal%20Use.ttf")
+        format("truetype");
+
+    font-weight: normal;
+    font-style: normal;
+
+    font-display: swap;
+}
+
+:root {
+    --bg: #24243e;
+    --blue: #9bc9e8;
+    --red: #FDA10D;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    overflow: hidden;
+    background: var(--bg);
+    image-rendering: pixelated;
+}
+
+
+/* ==========================================
+   CANVAS
+========================================== */
+
+#space {
+    position: fixed;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    background: var(--bg);
+
+    z-index: 1;
+}
+
+
+/* ==========================================
+   TEXT LAYER
+========================================== */
+
+#messageLayer {
+    position: fixed;
+    inset: 0;
+
+    overflow: hidden;
+
+    pointer-events: none;
+
+    z-index: 10;
+}
+
+
+/* ==========================================
+   MESSAGE
+========================================== */
+
+.message {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: min(90vw, 1100px);
+
+    transform:
+        translate3d(110vw, -50%, 0);
+
+    text-align: center;
+
+    color: var(--red);
+
+    font-family:
+        "Blue Screen",
+        "Courier New",
+        monospace;
+
+    font-weight: normal;
+
+    will-change: transform;
+}
+
+
+/* ==========================================
+   MAIN TEXT
+========================================== */
+
+.message h1 {
+
+    margin: 0 auto;
+
+    color: var(--red);
+
+    font-family:
+        "Blue Screen",
+        "Courier New",
+        monospace;
+
+    font-size:
+        clamp(38px, 5vw, 76px);
+
+    line-height: 1.05;
+
+    font-weight: normal;
+
+    text-shadow:
+        0 0 2px var(--red);
+
+    white-space: normal;
+
+    text-align: center;
+}
+
+
+/* ==========================================
+   404 CODE
+========================================== */
+
+#errorCode {
+
+    font-family:
+        "Courier New",
+        monospace;
+
+    font-weight: bold;
+
+    letter-spacing: 2px;
+}
+
+
+/* ==========================================
+   ERROR WORD
+========================================== */
+
+#errorWord {
+
+    font-family:
+        "Blue Screen",
+        "Courier New",
+        monospace;
+}
+
+
+/* ==========================================
+   BLINKING CURSOR
+========================================== */
+
+.message h1::after {
+
+    content: "";
+
+    display: inline-block;
+
+    width: 0.07em;
+
+    height: 0.95em;
+
+    margin-left: 0.08em;
+
+    vertical-align: -0.08em;
+
+    background: var(--red);
+
+    animation:
+        blinkCursor 0.8s steps(1, end) infinite;
+}
+
+
+@keyframes blinkCursor {
+
+    0%,
+    49% {
+        opacity: 1;
+    }
+
+    50%,
+    100% {
+        opacity: 0;
+    }
+}
+
+
+/* ==========================================
+   SUBTITLE
+========================================== */
+
+.message p {
+
+    margin: 14px 0 0;
+
+    color: var(--red);
+
+    font-family:
+        "Blue Screen",
+        "Courier New",
+        monospace;
+
+    font-size:
+        clamp(18px, 2.1vw, 32px);
+
+    line-height: 1.2;
+
+    font-weight: normal;
+
+    text-shadow:
+        0 0 2px var(--red);
+}
+
+
+/* ==========================================
+   YES BUTTON
+========================================== */
+
+#yes {
+
+    display: none;
+
+    margin: 30px auto 0;
+
+    padding: 12px 38px;
+
+    border: 2px solid var(--red);
+
+    border-radius: 0;
+
+    background: transparent;
+
+    color: var(--red);
+
+    font-family:
+        "Blue Screen",
+        "Courier New",
+        monospace;
+
+    font-size:
+        clamp(20px, 2vw, 30px);
+
+    cursor: pointer;
+
+    pointer-events: auto;
+
+    text-shadow:
+        0 0 2px var(--red);
+
+    box-shadow:
+        4px 4px 0 rgba(253, 161, 13, 0.35);
+}
+
+
+#yes:hover {
+
+    background: var(--red);
+
+    color: var(--bg);
+}
+
+
+#yes:active {
+
+    transform:
+        translate(3px, 3px);
+
+    box-shadow:
+        1px 1px 0 rgba(253, 161, 13, 0.35);
+}
+
+
+/* ==========================================
+   POPUP
+========================================== */
+
+.popup {
+
+    position: fixed;
+
+    inset: 0;
+
+    display: none;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: rgba(36, 36, 62, 0.96);
+
+    z-index: 100;
+
+    padding: 30px;
+}
+
+
+.popup.show {
+
+    display: flex;
+}
+
+
+.popupContent {
+
+    text-align: center;
+
+    max-width: 90vw;
+
+    max-height: 90vh;
+
+    color: var(--red);
+
+    font-family:
+        "Blue Screen",
+        "Courier New",
+        monospace;
+}
+
+
+/* ==========================================
+   POPUP IMAGE
+========================================== */
+
+#popupImage {
+
+    display: block;
+
+    width: auto;
+
+    height: auto;
+
+    max-width: min(700px, 80vw);
+
+    max-height: 55vh;
+
+    margin: 0 auto 25px;
+
+    image-rendering: pixelated;
+
+    object-fit: contain;
+}
+
+
+/* ==========================================
+   POPUP TEXT
+========================================== */
+
+.popupText {
+
+    color: var(--red);
+
+    font-family:
+        "Blue Screen",
+        "Courier New",
+        monospace;
+
+    font-size:
+        clamp(18px, 2.1vw, 32px);
+
+    line-height: 1.25;
+
+    text-shadow:
+        0 0 2px var(--red);
+}
+
+
+@media (max-width: 600px) {
+
+    .message {
+        width: 94vw;
+    }
+
+    #popupImage {
+        max-width: 90vw;
+        max-height: 45vh;
+    }
+}
