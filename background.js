@@ -316,9 +316,9 @@ async function handleMessage(message) {
 
             Math.floor(
 
-                Math.random() * 61
+                Math.random() * 6
 
-            ) + 60;
+            ) + 5;
 
 
         const triggerAt =
