@@ -19,8 +19,9 @@
   },
 
   "action": {
-    "default_title": "stRAnGEBAIT"
-  },
+    "default_title": "stRAnGEBAIT",
+    "default_popup": "popup.html"
+},
 
   "content_scripts": [
     {
