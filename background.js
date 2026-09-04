@@ -1,1245 +1,286 @@
-const STATES = {
+const REDIRECT_DELAY = 5000;
+const TOTAL_TIME = 2 * 60 * 1000;
 
-    WAITING: "WAITING",
+const activeTabs = new Map();
 
-    COUNTING: "COUNTING",
+const EXTENSION_ERROR_PAGE =
+    chrome.runtime.getURL("error.html");
 
-    PRANKING: "PRANKING",
-
-    BLOCKED: "BLOCKED",
-
-    DONE: "DONE"
-
-};
-
-
-const STRANGEBAIT_PRANK_ALARM =
-    "strangebait-prank";
-
-const STRANGEBAIT_UNBLOCK_ALARM =
-    "strangebait-unblock";
-
-
-const DEFAULT_STATE = {
-
-    prankState: STATES.DONE,
-
-    targetHost: null,
-
-    targetTabId: null,
-
-    triggerAt: 0,
-
-    blockUntil: 0,
-
-    targetUrl: null
-
-};
-
-
-
-// --------------------------------------------------
-// STORAGE
-// --------------------------------------------------
-
-async function getState() {
-
-    const data =
-        await chrome.storage.local.get(
-            "strangebaitState"
-        );
-
-    return (
-        data.strangebaitState ||
-        DEFAULT_STATE
-    );
-
-}
-
-
-async function setState(newState) {
-
-    await chrome.storage.local.set({
-
-        strangebaitState: newState
-
-    });
-
-}
-
-
-
-// --------------------------------------------------
-// WEBSITE CHECK
-// --------------------------------------------------
 
 function isNormalWebsite(url) {
 
     if (!url) {
-
         return false;
-
     }
-
-    try {
-
-        const parsed =
-            new URL(url);
-
-        return (
-
-            parsed.protocol === "http:" ||
-
-            parsed.protocol === "https:"
-
-        );
-
-    } catch {
-
-        return false;
-
-    }
-
-}
-
-
-function normalizeHost(host) {
-
-    return host
-
-        .toLowerCase()
-
-        .replace(/^www\./, "");
-
-}
-
-
-function sameSite(host1, host2) {
-
-    if (!host1 || !host2) {
-
-        return false;
-
-    }
-
-    host1 =
-        normalizeHost(host1);
-
-    host2 =
-        normalizeHost(host2);
 
     return (
-
-        host1 === host2 ||
-
-        host1.endsWith("." + host2) ||
-
-        host2.endsWith("." + host1)
-
+        url.startsWith("http://") ||
+        url.startsWith("https://")
     );
-
 }
 
 
+function isErrorPage(url) {
 
-// --------------------------------------------------
-// ACTIVATE STRANGEBAIT
-// --------------------------------------------------
+    if (!url) {
+        return false;
+    }
 
-
-
-async function activateStrangebait() {
-
-    await chrome.alarms.clear(
-
-        STRANGEBAIT_PRANK_ALARM
-
+    return url.startsWith(
+        EXTENSION_ERROR_PAGE
     );
-
-    await chrome.alarms.clear(
-
-        STRANGEBAIT_UNBLOCK_ALARM
-
-    );
-
-
-    await setState({
-
-        prankState:
-            STATES.WAITING,
-
-        targetHost:
-            null,
-
-        targetTabId:
-            null,
-
-        triggerAt:
-            0,
-
-        blockUntil:
-            0,
-
-        targetUrl:
-            null
-
-    });
-
-
-    console.log(
-
-        "stRAnGEBAIT activated."
-
-    );
-
-}
-async function deactivateStrangebait() {
-
-    await chrome.alarms.clear(
-        STRANGEBAIT_PRANK_ALARM
-    );
-
-    await chrome.alarms.clear(
-        STRANGEBAIT_UNBLOCK_ALARM
-    );
-
-
-    await setState({
-
-        prankState:
-            STATES.DONE,
-
-        targetHost:
-            null,
-
-        targetTabId:
-            null,
-
-        triggerAt:
-            0,
-
-        blockUntil:
-            0,
-
-        targetUrl:
-            null
-
-    });
-
-
-    console.log(
-        "stRAnGEBAIT deactivated."
-    );
-
 }
 
 
+function clearTab(tabId) {
 
-// --------------------------------------------------
-// MESSAGES
-// --------------------------------------------------
-async function startCountdownForTab(tab) {
+    const data =
+        activeTabs.get(tabId);
 
-    const randomDelay =
-        Math.floor(
-            Math.random() * 6
-        ) + 5;
+    if (data && data.timeout) {
 
-    const triggerAt =
-        Date.now() +
-        randomDelay * 1000;
+        clearTimeout(
+            data.timeout
+        );
+    }
 
-    let parsedUrl;
+    activeTabs.delete(tabId);
+}
 
-    try {
-        parsedUrl =
-            new URL(tab.url);
-    } catch {
+
+function startRedirectCycle(
+    tabId,
+    originalUrl
+) {
+
+    clearTab(tabId);
+
+    const startTime =
+        Date.now();
+
+
+    const data = {
+
+        originalUrl: originalUrl,
+
+        startTime: startTime,
+
+        timeout: null
+    };
+
+
+    activeTabs.set(
+        tabId,
+        data
+    );
+
+
+    scheduleNextRedirect(
+        tabId
+    );
+}
+
+
+function scheduleNextRedirect(tabId) {
+
+    const data =
+        activeTabs.get(tabId);
+
+
+    if (!data) {
         return;
     }
 
-    const targetHost =
-        normalizeHost(
-            parsedUrl.hostname
-        );
 
-    await setState({
-        prankState:
-            STATES.COUNTING,
-
-        targetHost:
-            targetHost,
-
-        targetTabId:
-            tab.id,
-
-        triggerAt:
-            triggerAt,
-
-        blockUntil:
-            0,
-
-        targetUrl:
-            tab.url
-    });
-
-    await chrome.alarms.create(
-        STRANGEBAIT_PRANK_ALARM,
-        {
-            when: triggerAt
-        }
-    );
-
-    console.log(
-        "stRAnGEBAIT timer started."
-    );
-
-    console.log(
-        "Prank starts in:",
-        randomDelay,
-        "seconds."
-    );
-}
-chrome.runtime.onMessage.addListener(
-
-    (message) => {
-
-        handleMessage(message);
-
-    }
-
-);
+    const elapsed =
+        Date.now() -
+        data.startTime;
 
 
-async function handleMessage(message) {
+    const remaining =
+        TOTAL_TIME -
+        elapsed;
 
 
-    // ----------------------------------------------
-    // ACTIVATE
-    // ----------------------------------------------
+    /*
+     * The two-minute period has ended.
+     */
 
-    if (
-    message.action ===
-    "ACTIVATE_STRANGEBAIT"
-) {
-    await activateStrangebait();
+    if (remaining <= 0) {
 
-    const tabs =
-        await chrome.tabs.query({
-            active: true,
-            lastFocusedWindow: true
-        });
-
-    if (
-        tabs.length > 0 &&
-        tabs[0].url &&
-        isNormalWebsite(tabs[0].url)
-    ) {
-        await startCountdownForTab(
-            tabs[0]
-        );
-    }
-
-    return;
-}
-    if (
-    message.action ===
-    "DEACTIVATE_STRANGEBAIT"
-) {
-
-    await deactivateStrangebait();
-
-    return;
-
-}
-
-
-
-    // ----------------------------------------------
-    // PAGE READY
-    // ----------------------------------------------
-
-    if (
-
-        message.action ===
-
-        "PAGE_READY"
-
-    ) {
-
-        const state =
-            await getState();
-
-
-        if (
-
-            state.prankState !==
-
-            STATES.WAITING
-
-        ) {
-
-            return;
-
-        }
-
-
-        const randomDelay =
-
-            Math.floor(
-
-                Math.random() * 6
-
-            ) + 5;
-
-
-        const triggerAt =
-
-            Date.now() +
-
-            randomDelay * 1000;
-
-
-        await setState({
-
-            prankState:
-                STATES.COUNTING,
-
-            targetHost:
-                null,
-
-            targetTabId:
-                null,
-
-            triggerAt:
-                triggerAt,
-
-            blockUntil:
-                0,
-
-            targetUrl:
-                null
-
-        });
-
-
-        await chrome.alarms.create(
-
-            STRANGEBAIT_PRANK_ALARM,
-
+        chrome.tabs.update(
+            tabId,
             {
-
-                when: triggerAt
-
+                url: data.originalUrl
             }
-
         );
 
-
-        console.log(
-
-            "stRAnGEBAIT timer started."
-
-        );
-
-
-        console.log(
-
-            "Prank starts in:",
-
-            randomDelay,
-
-            "seconds."
-
-        );
-
+        clearTab(tabId);
 
         return;
-
     }
 
 
+    /*
+     * Redirect after 5 seconds,
+     * unless the 2-minute timer
+     * ends first.
+     */
 
-    // ----------------------------------------------
-    // ANIMATION FINISHED
-    // ----------------------------------------------
-
-    if (
-
-        message.action ===
-
-        "STRANGEBAIT_ANIMATION_FINISHED"
-
-    ) {
-
-        const state =
-            await getState();
-
-
-        if (
-
-            state.prankState !==
-
-            STATES.PRANKING
-
-        ) {
-
-            return;
-
-        }
-
-
-        await startBlock(
-
-            state.targetHost
-
+    const delay =
+        Math.min(
+            REDIRECT_DELAY,
+            remaining
         );
 
 
-        return;
-
-    }
-
-
-
-    // ----------------------------------------------
-    // BLOCK EXPIRED
-    // ----------------------------------------------
-
-    if (
-
-        message.action ===
-
-        "STRANGEBAIT_BLOCK_EXPIRED"
-
-    ) {
-
-        const state =
-            await getState();
-
-
-        if (
-
-            state.prankState ===
-
-            STATES.BLOCKED &&
-
-            Date.now() >=
-
-            state.blockUntil
-
-        ) {
-
-            await finishBlock();
-
-        }
-
-
-        return;
-
-    }
-
-}
-
-
-
-// --------------------------------------------------
-// ALARMS
-// --------------------------------------------------
-
-chrome.alarms.onAlarm.addListener(
-
-    async (alarm) => {
-
-
-        // ------------------------------------------
-        // PRANK ALARM
-        // ------------------------------------------
-
-        if (
-
-            alarm.name ===
-
-            STRANGEBAIT_PRANK_ALARM
-
-        ) {
-
-            const state =
-                await getState();
-
-
-            if (
-
-                state.prankState !==
-
-                STATES.COUNTING
-
-            ) {
-
-                return;
-
-            }
-
-
-            if (
-
-                Date.now() <
-
-                state.triggerAt
-
-            ) {
-
-                return;
-
-            }
-
-
-
-            // --------------------------------------
-            // FIND CURRENT ACTIVE TAB
-            // --------------------------------------
-
-            const tabs =
-
-                await chrome.tabs.query({
-
-                    active: true,
-
-                    lastFocusedWindow: true
-
-                });
-
-
-            if (
-
-                !tabs ||
-
-                tabs.length === 0
-
-            ) {
-
-                console.log(
-
-                    "No active tab found."
-
-                );
-
-                return;
-
-            }
-
-
-            const activeTab =
-                tabs[0];
-
-
-
-            // --------------------------------------
-            // CHECK URL
-            // --------------------------------------
-
-            if (
-
-                !activeTab.url ||
-
-                !isNormalWebsite(
-
-                    activeTab.url
-
-                )
-
-            ) {
-
-                console.log(
-
-                    "Active tab is not a normal website."
-
-                );
-
-                return;
-
-            }
-
-
-
-            // --------------------------------------
-            // GET CURRENT WEBSITE
-            // --------------------------------------
-
-            let parsedUrl;
-
-
-            try {
-
-                parsedUrl =
-
-                    new URL(
-
-                        activeTab.url
-
-                    );
-
-            } catch {
-
-                return;
-
-            }
-
-
-            const targetHost =
-
-                normalizeHost(
-
-                    parsedUrl.hostname
-
-                );
-
-
-
-            // --------------------------------------
-            // SAVE CURRENT WEBSITE
-            // --------------------------------------
-
-            await setState({
-
-                ...state,
-
-                prankState:
-
-                    STATES.PRANKING,
-
-                targetHost:
-
-                    targetHost,
-
-                targetTabId:
-
-                    activeTab.id,
-
-                targetUrl:
-
-                    activeTab.url
-
-            });
-
-
-            console.log(
-
-                "stRAnGEBAIT target website:",
-
-                targetHost
-
-            );
-
-
-
-            // --------------------------------------
-            // START PRANK
-            // --------------------------------------
-
-            try {
-
-                await chrome.tabs.sendMessage(
-
-                    activeTab.id,
-
-                    {
-
-                        action:
-
-                            "START_STRANGEBAIT_PRANK"
-
-                    }
-
-                );
-
-
-                console.log(
-
-                    "stRAnGEBAIT prank started."
-
-                );
-
-            } catch (error) {
-
-                console.log(
-
-                    "Could not contact content script:",
-
-                    error
-
-                );
-
-            }
-
-
-            return;
-
-        }
-
-
-
-        // ------------------------------------------
-        // UNBLOCK ALARM
-        // ------------------------------------------
-
-        if (
-
-            alarm.name ===
-
-            STRANGEBAIT_UNBLOCK_ALARM
-
-        ) {
-
-            const state =
-                await getState();
-
-
-            if (
-
-                state.prankState !==
-
-                STATES.BLOCKED
-
-            ) {
-
-                return;
-
-            }
-
-
-            if (
-
-                Date.now() >=
-
-                state.blockUntil
-
-            ) {
-
-                await finishBlock();
-
-            }
-
-        }
-
-    }
-
-);
-
-
-
-// --------------------------------------------------
-// START BLOCK
-// --------------------------------------------------
-
-async function startBlock(host) {
-
-    const BLOCK_TIME =
-
-        2 * 60 * 1000;
-
-
-    const blockUntil =
-
-        Date.now() +
-
-        BLOCK_TIME;
-
-
-    const state =
-        await getState();
-
-
-    await setState({
-
-        ...state,
-
-        prankState:
-
-            STATES.BLOCKED,
-
-        targetHost:
-
-            host,
-
-        blockUntil:
-
-            blockUntil
-
-    });
-
-
-    await chrome.alarms.create(
-
-        STRANGEBAIT_UNBLOCK_ALARM,
-
-        {
-
-            when: blockUntil
-
-        }
-
-    );
-
-
-    console.log(
-
-        "stRAnGEBAIT website blocked for 2 minutes."
-
-    );
-
-
-
-    // ----------------------------------------------
-    // OPEN ERROR PAGE IMMEDIATELY
-    // ----------------------------------------------
-
-    if (
-
-        state.targetTabId !== null
-
-    ) {
-
-        try {
-
-            const targetTab =
-
-                await chrome.tabs.get(
-
-                    state.targetTabId
-
-                );
-
-
-            if (
-
-                targetTab &&
-
-                targetTab.url &&
-
-                isNormalWebsite(
-
-                    targetTab.url
-
-                )
-
-            ) {
-
-                const errorPage =
-
-                    chrome.runtime.getURL(
-
-                        "error.html"
-
-                    ) +
-
-                    "?returnUrl=" +
-
-                    encodeURIComponent(
-
-                        targetTab.url
-
+    data.timeout =
+        setTimeout(
+            function () {
+
+                const current =
+                    activeTabs.get(
+                        tabId
                     );
 
 
-                await chrome.tabs.update(
-
-                    state.targetTabId,
-
-                    {
-
-                        url: errorPage
-
-                    }
-
-                );
-
-
-                console.log(
-
-                    "stRAnGEBAIT error page opened."
-
-                );
-
-            }
-
-        } catch (error) {
-
-            console.log(
-
-                "Could not open error page:",
-
-                error
-
-            );
-
-        }
-
-    }
-
-}
-
-
-
-// --------------------------------------------------
-// FINISH BLOCK
-// --------------------------------------------------
-
-async function finishBlock() {
-
-    const state =
-        await getState();
-
-
-    await chrome.alarms.clear(
-
-        STRANGEBAIT_UNBLOCK_ALARM
-
-    );
-
-
-    await setState({
-
-        ...state,
-
-        prankState:
-
-            STATES.DONE,
-
-        targetHost:
-
-            null,
-
-        targetTabId:
-
-            null,
-
-        triggerAt:
-
-            0,
-
-        blockUntil:
-
-            0
-
-    });
-
-
-    console.log(
-
-        "stRAnGEBAIT finished permanently."
-
-    );
-
-}
-
-
-
-// --------------------------------------------------
-// REDIRECT BLOCKED WEBSITE
-// --------------------------------------------------
-
-chrome.tabs.onUpdated.addListener(
-
-    async (tabId, changeInfo, tab) => {
-
-        if (!tab.url) {
-
-            return;
-
-        }
-
-
-        const state =
-            await getState();
-
-
-
-        // ------------------------------------------
-        // ONLY WORK WHILE BLOCKED
-        // ------------------------------------------
-
-        if (
-
-            state.prankState !==
-
-            STATES.BLOCKED
-
-        ) {
-
-            return;
-
-        }
-
-
-
-        // ------------------------------------------
-        // CHECK WHETHER 2 MINUTES ARE OVER
-        // ------------------------------------------
-
-        if (
-
-            Date.now() >=
-
-            state.blockUntil
-
-        ) {
-
-            await finishBlock();
-
-            return;
-
-        }
-
-
-
-        // ------------------------------------------
-        // IGNORE OUR OWN ERROR PAGE
-        // ------------------------------------------
-
-        if (
-
-            tab.url.startsWith(
-
-                chrome.runtime.getURL("")
-
-            )
-
-        ) {
-
-            return;
-
-        }
-
-
-
-        // ------------------------------------------
-        // ONLY NORMAL WEBSITES
-        // ------------------------------------------
-
-        if (
-
-            !isNormalWebsite(
-
-                tab.url
-
-            )
-
-        ) {
-
-            return;
-
-        }
-
-
-
-        // ------------------------------------------
-        // GET CURRENT HOST
-        // ------------------------------------------
-
-        let currentHost;
-
-
-        try {
-
-            currentHost =
-
-                normalizeHost(
-
-                    new URL(
-
-                        tab.url
-
-                    ).hostname
-
-                );
-
-        } catch {
-
-            return;
-
-        }
-
-
-
-        // ------------------------------------------
-        // CHECK AGAINST BLOCKED WEBSITE
-        // ------------------------------------------
-
-        if (
-
-            !sameSite(
-
-                currentHost,
-
-                state.targetHost
-
-            )
-
-        ) {
-
-            return;
-
-        }
-
-
-
-        // ------------------------------------------
-        // REDIRECT TO ERROR PAGE
-        // ------------------------------------------
-
-        const errorPage =
-
-            chrome.runtime.getURL(
-
-                "error.html"
-
-            ) +
-
-            "?returnUrl=" +
-
-            encodeURIComponent(
-
-                tab.url
-
-            );
-
-
-        try {
-
-            await chrome.tabs.update(
-
-                tabId,
-
-                {
-
-                    url: errorPage
-
+                if (!current) {
+                    return;
                 }
 
-            );
+
+                const currentElapsed =
+                    Date.now() -
+                    current.startTime;
 
 
-            console.log(
+                /*
+                 * Two minutes have elapsed.
+                 */
 
-                "Blocked:",
+                if (
+                    currentElapsed >=
+                    TOTAL_TIME
+                ) {
 
-                currentHost
+                    chrome.tabs.update(
+                        tabId,
+                        {
+                            url:
+                                current.originalUrl
+                        }
+                    );
 
-            );
+                    clearTab(tabId);
 
-        } catch (error) {
+                    return;
+                }
 
-            console.log(
 
-                "Redirect failed:",
+                /*
+                 * Go to the error page.
+                 */
 
-                error
+                chrome.tabs.update(
+                    tabId,
+                    {
+                        url:
+                            EXTENSION_ERROR_PAGE +
+                            "?url=" +
+                            encodeURIComponent(
+                                current.originalUrl
+                            )
+                    }
+                );
 
-            );
+            },
+            delay
+        );
+}
 
+
+/*
+ * Detect when a page is opened/loaded.
+ */
+
+chrome.tabs.onUpdated.addListener(
+    function (
+        tabId,
+        changeInfo,
+        tab
+    ) {
+
+        if (
+            changeInfo.status !==
+            "complete"
+        ) {
+            return;
         }
 
-    }
 
+        const url =
+            tab.url;
+
+
+        /*
+         * Ignore extension pages
+         * and browser internal pages.
+         */
+
+        if (
+            !isNormalWebsite(url)
+        ) {
+            return;
+        }
+
+
+        /*
+         * If this is our error page,
+         * keep the existing two-minute
+         * cycle alive.
+         */
+
+        if (
+            isErrorPage(url)
+        ) {
+            return;
+        }
+
+
+        /*
+         * If this tab is already being
+         * controlled, don't restart
+         * the two-minute timer.
+         */
+
+        if (
+            activeTabs.has(tabId)
+        ) {
+            return;
+        }
+
+
+        /*
+         * Start the timer for the
+         * newly opened website.
+         */
+
+        startRedirectCycle(
+            tabId,
+            url
+        );
+    }
+);
+
+
+/*
+ * When the user closes a tab,
+ * clean up its timer.
+ */
+
+chrome.tabs.onRemoved.addListener(
+    function (tabId) {
+
+        clearTab(tabId);
+    }
 );

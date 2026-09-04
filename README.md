@@ -2,11 +2,11 @@
 
 
 
-# [Project Name] 🎯
+# stRAnGEBAIT🎯
 
 
 ## Basic Details
-### Team Name: [Name]
+### Team Name: Red White and Blue Sprinkled Donuts
 
 
 ### Team Members
@@ -14,79 +14,46 @@
 - Member 2: Manjari Nair Ani - Model Enginneering College,Thrikkakara
 
 ### Project Description
-[2-3 lines about what your project does]
+Our project,stRAnGEBAIT is a chrome web-extension designed to rait bait you. When the extension is active and the user opens a website, within a few seconds of use, it redirects the user to a 404 Page Not Found error screen with a ragebait suspense.
 
 ### The Problem (that doesn't exist)
-[What ridiculous problem are you solving?]
+Lack of problems to add to your plate and lack of 
 
 ### The Solution (that nobody asked for)
-[How are you solving it? Keep it fun!]
+To ruin your everyday web browsing.
 
 ## Technical Details
 ### Technologies/Components Used
 For Software:
-- [Languages used]
-- [Frameworks used]
-- [Libraries used]
-- [Tools used]
+- HTML,CSS,JAVASCRIPT,JSON
+- No external frameworks used
+- No libraries used
+- Visual Studio Code, Google Chrome, Chrome developer mode, ChatGPT
 
 
 ### Implementation
-For Software:
-# Installation
-[commands]
-
-# Run
-[commands]
+For Software: The product is an extension so a livr demo is provided below.
 
 ### Project Documentation
 For Software:
 
-# Screenshots (Add at least 3)
-![Screenshot1](Add screenshot 1 here with proper name)
-*Add caption explaining what this shows*
+# Screenshots 
+![alt text](<error page coding-1.jpeg>) 
+The page displays the designing of 404 error page and its first look
 
-![Screenshot2](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
+![alt text](<error page implementation-1.jpeg>)
+The page displays how the 404 error page looks when the user is redirected to it
 
-![Screenshot3](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
-
-# Diagrams
-![Workflow](Add your workflow/architecture diagram here)
-*Add caption explaining your workflow*
-
-For Hardware:
-
-# Schematic & Circuit
-![Circuit](Add your circuit diagram here)
-*Add caption explaining connections*
-
-![Schematic](Add your schematic diagram here)
-*Add caption explaining the schematic*
-
-# Build Photos
-![Components](Add photo of your components here)
-*List out all components shown*
-
-![Build](Add photos of build process here)
-*Explain the build steps*
-
-![Final](Add photo of final product here)
-*Explain the final build*
 
 ### Project Demo
 # Video
-[Add your demo video link here]
-*Explain what the video demonstrates*
+https://drive.google.com/file/d/1CVHC4brCuz0zPksoW0_he_7bH2hUBqGr/view?usp=sharing
+The video demonstrates how the error page plays out, inspired by the spiderman infamous end credit scene. It ends with a ragebait trap.
 
-# Additional Demos
-[Add any extra demo materials/links]
 
 ## Team Contributions
-- [Name 1]: [Specific contributions]
-- [Name 2]: [Specific contributions]
-- [Name 3]: [Specific contributions]
+- Nidhi Sandeep - Developed Chrome extension, implemented background server, tested and debugged extensions
+- Manjari Nair Ani - Designed the main web page, Implemented animated text transition,blinking cursors and styled the overall interface. 
 
 ---
 Made with ❤️ at TinkerHub Useless Projects 
